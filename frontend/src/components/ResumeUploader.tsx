@@ -36,7 +36,11 @@ export const ResumeUploader: React.FC<ResumeUploaderProps> = ({ applicantId, onU
   });
 
   const handleUpload = async () => {
-    if (!file) return;
+    if (!file || !applicantId) {
+      setError('Missing file or applicant ID. Please log in again.');
+      toast.error('Missing file or applicant ID. Please log in again.');
+      return;
+    }
 
     setUploading(true);
     setProgress(0);
@@ -57,7 +61,7 @@ export const ResumeUploader: React.FC<ResumeUploaderProps> = ({ applicantId, onU
         },
       });
 
-      toast.success('Resume uploaded successfully!');
+      toast.success('Resume uploaded and skills extracted successfully!');
       if (onUploadSuccess) {
         onUploadSuccess(response.data);
       }

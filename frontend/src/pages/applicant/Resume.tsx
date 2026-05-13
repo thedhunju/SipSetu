@@ -17,7 +17,9 @@ export default function ApplicantResume() {
     if (!user?.id) return;
     setLoading(true);
     try {
-      const response = await axios.get(`http://127.0.0.1:5000/api/resumes?applicant_id=${user.id}`);
+      const response = await axios.get(`http://127.0.0.1:5000/api/resumes`, {
+        params: { applicant_id: user.id }
+      });
       setResumes(response.data);
     } catch (error) {
       console.error('Error fetching resumes:', error);

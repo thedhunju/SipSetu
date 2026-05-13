@@ -1,10 +1,11 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
+import axios from 'axios';
 
 interface User {
   id: string;
   email: string;
+  name: string;
   role: 'applicant' | 'recruiter';
-  companyId?: string;
 }
 
 interface AuthContextType {
@@ -23,14 +24,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const login = async (email: string, password: string, role: 'applicant' | 'recruiter') => {
-    // Mock authentication
-    const mockUser: User = {
-      id: Math.random().toString(36).substring(7),
-      email,
-      role,
-    };
-    setUser(mockUser);
-    localStorage.setItem('user', JSON.stringify(mockUser));
+    try {
+      const response = await axios.post('http://127.0.0.1:5000/api/auth/login', {
+        email,
+        password,
+      });
+      
+      const user: User = {
+        id: response.data.user_id,
+        email: response.data.email,
+        name: response.data.name,
+        role: response.data.role,
+      };
+      
+      setUser(user);
+      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('user_id', response.data.user_id);
+      localStorage.setItem('user_role', response.data.role);
+    } catch (error) {
+      console.error('Login failed:', error);
+      throw error;
+    }
   };
 
   const logout = () => {

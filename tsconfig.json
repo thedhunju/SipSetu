@@ -1,19 +1,24 @@
 {
   "compilerOptions": {
+    // Suppress deprecation warnings for features deprecated in TypeScript 6.0 and earlier.
+    // This option is not widely documented; see https://github.com/microsoft/TypeScript/issues/57031 for context.
     "ignoreDeprecations": "6.0",
     "target": "ES2022",
     "module": "ESNext",
-    "moduleResolution": "Node",
+    "moduleResolution": "bundler",
     "jsx": "react-jsx",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
+    "baseUrl": "frontend/src",
     "resolveJsonModule": true,
-    "baseUrl": "./frontend/src",
     "paths": {
-      "@/*": ["*"]
+      "@/*": [
+        "*"
+      ]
     }
   },
-  "include": ["frontend/src"]
+  "include": [
+    "frontend/src"
+  ]
 }
