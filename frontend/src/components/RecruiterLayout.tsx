@@ -2,6 +2,7 @@ import { Link, useLocation } from "react-router";
 import { LayoutDashboard, PlusSquare, Users, User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ThemeToggle } from "./ThemeToggle";
 
 const navItems = [
   { name: "Dashboard", href: "/recruiter/dashboard", icon: LayoutDashboard },
@@ -14,7 +15,7 @@ export function RecruiterLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden">
+    <div className="flex h-screen bg-background overflow-hidden">
       {/* Sidebar */}
       <aside className="w-64 bg-[#1E3A5F] flex flex-col flex-shrink-0" data-testid="recruiter-sidebar">
         <div className="h-16 flex items-center px-6">
@@ -65,7 +66,15 @@ export function RecruiterLayout({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-background">
+        <header className="h-16 border-b flex items-center justify-end px-8 gap-4 flex-shrink-0">
+          <ThemeToggle />
+          <Avatar className="h-8 w-8">
+            <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+              {localStorage.getItem("user_name")?.split(' ').map(n => n[0]).join('') || "RC"}
+            </AvatarFallback>
+          </Avatar>
+        </header>
         <ScrollArea className="flex-1 h-full">
           <div className="p-6 md:p-8 max-w-7xl mx-auto w-full">
             {children}

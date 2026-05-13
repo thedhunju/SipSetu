@@ -71,7 +71,8 @@ class Resume(db.Model):
     resume_id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     applicant_id = db.Column(UUID(as_uuid=True), db.ForeignKey('applicants.user_id', ondelete='CASCADE'), nullable=False)
     raw_text = db.Column(db.Text)
-    file_path = db.Column(db.String(500))
+    file_path = db.Column(db.String(500), nullable=True)  # Path to uploaded resume file
+
     uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     skills = db.relationship('Skill', secondary=resume_skills, backref=db.backref('resumes', lazy='dynamic'))

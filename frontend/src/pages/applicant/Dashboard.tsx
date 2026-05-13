@@ -24,8 +24,8 @@ export default function ApplicantDashboardHome() {
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/jobs");
-        setJobs(response.data);
+        const response = await axios.get("http://127.0.0.1:5000/api/jobs");
+        setJobs(response.data.jobs || []);
       } catch (err) {
         console.error("Failed to fetch jobs", err);
       }

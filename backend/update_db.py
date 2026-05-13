@@ -12,6 +12,9 @@ with app.app_context():
         db.session.execute(text("ALTER TABLE recruiters ADD COLUMN IF NOT EXISTS company VARCHAR(255)"))
         db.session.execute(text("ALTER TABLE recruiters ADD COLUMN IF NOT EXISTS job_title VARCHAR(255)"))
         
+        # Add columns to resumes table
+        db.session.execute(text("ALTER TABLE resumes ADD COLUMN IF NOT EXISTS file_path VARCHAR(500)"))
+        
         db.session.commit()
         print("Database schema updated successfully!")
     except Exception as e:

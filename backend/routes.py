@@ -5,6 +5,11 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 from sqlalchemy import func
+import os
+import uuid
+from werkzeug.utils import secure_filename
+from utils import extract_text_from_file, allowed_file
+from flask import current_app
 
 api = Blueprint('api', __name__)
 
@@ -331,6 +336,104 @@ def resumes():
         } for r in resumes_list]
         
         return jsonify(result), 200
+
+@api.route('/resumes/upload', methods=['POST'])
+def upload_resume_file():
+    """Upload a resume file (PDF, DOCX, TXT)"""
+    if 'file' not in request.files:
+        return jsonify({"error": "No file part"}), 400
+    
+    file = request.files['file']
+    applicant_id = request.form.get('applicant_id')
+    
+    if not applicant_id:
+        return jsonify({"error": "Missing applicant_id"}), 400
+    
+    if file.filename == '':
+        return jsonify({"error": "No selected file"}), 400
+    
+    allowed_extensions = {'pdf', 'docx', 'txt'}
+    if file and allowed_file(file.filename, allowed_extensions):
+        filename = secure_filename(file.filename)
+        # Use UUID to avoid collisions
+        unique_filename = f"{uuid.uuid4()}_{filename}"
+        file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], unique_filename)
+        file.save(file_path)
+        
+        # Extract text
+        try:
+            raw_text = extract_text_from_file(file_path)
+        except Exception as e:
+            return jsonify({"error": f"Failed to extract text: {str(e)}"}), 500
+        
+        # Verify applicant exists
+        applicant = Applicant.query.get(applicant_id)
+        if not applicant:
+            return jsonify({"error": "Applicant not found"}), 404
+        
+        # Extract skills
+        extracted_skills = extract_skills_from_text(raw_text)
+        
+        # Create resume
+        new_resume = Resume(
+            applicant_id=applicant_id, 
+            raw_text=raw_text,
+            file_path=file_path
+        )
+        
+        # Add skills
+        for skill_name in extracted_skills:
+            skill = Skill.query.filter_by(skill_name=skill_name.lower()).first()
+            if not skill:
+                skill = Skill(skill_name=skill_name.lower())
+                db.session.add(skill)
+            if skill not in new_resume.skills:
+                new_resume.skills.append(skill)
+        
+        db.session.add(new_resume)
+        db.session.flush()
+        
+        # Create rankings
+        create_rankings_for_resume(new_resume.resume_id, applicant_id)
+        
+        db.session.commit()
+        
+        return jsonify({
+            "message": "Resume file uploaded and processed successfully",
+            "resume_id": str(new_resume.resume_id),
+            "skills_extracted": extracted_skills
+        }), 201
+    
+    return jsonify({"error": "Invalid file type"}), 400
+
+@api.route('/jobs/<job_id>/gap', methods=['GET'])
+def get_skill_gap(job_id):
+    """Calculate skill gap between a job and a resume"""
+    resume_id = request.args.get('resume_id')
+    if not resume_id:
+        return jsonify({"error": "Missing resume_id"}), 400
+    
+    job = Job.query.get(job_id)
+    resume = Resume.query.get(resume_id)
+    
+    if not job:
+        return jsonify({"error": "Job not found"}), 404
+    if not resume:
+        return jsonify({"error": "Resume not found"}), 404
+    
+    job_skills = {s.skill_name.lower() for s in job.skills}
+    resume_skills = {s.skill_name.lower() for s in resume.skills}
+    
+    missing_skills = list(job_skills - resume_skills)
+    matching_skills = list(job_skills & resume_skills)
+    
+    return jsonify({
+        "job_id": job_id,
+        "resume_id": resume_id,
+        "missing_skills": missing_skills,
+        "matching_skills": matching_skills,
+        "gap_percentage": round((len(missing_skills) / len(job_skills) * 100) if job_skills else 0, 2)
+    }), 200
 
 @api.route('/applicants/<applicant_id>/matched-jobs', methods=['GET'])
 def get_matched_jobs(applicant_id):

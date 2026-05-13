@@ -16,6 +16,12 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
+    # Configure Uploads
+    upload_folder = os.path.join(os.getcwd(), 'uploads')
+    if not os.path.exists(upload_folder):
+        os.makedirs(upload_folder)
+    app.config['UPLOAD_FOLDER'] = upload_folder
+    
     db.init_app(app)
     
     from routes import api
